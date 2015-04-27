@@ -99,38 +99,35 @@ function storeCurrentVals(prefix, paths, doc, next) {
 
 module.exports = function(schema) {
   var forgetCb = function() {};
+  schema._uniqueShard = {};
+  schema._uniqueShard.paths = getPaths(schema);
   schema.pre('init', function(next) {
     var doc = this;
     doc.on('init', function() {
-      var uniquePaths = getPaths(doc.schema);
-      storeCurrentVals('', uniquePaths, doc, forgetCb);
+      storeCurrentVals('', doc.schema._uniqueShard.paths, doc, forgetCb);
     });
     next();
   });
   schema.pre('validate', function(next) {
     var doc = this;
-    var uniquePaths = getPaths(doc.schema);
-    checkUnique('', uniquePaths, doc, next);
+    checkUnique('', doc.schema._uniqueShard.paths, doc, next);
   });
   schema.pre('save', function(next) {
     var doc = this;
-    var uniquePaths = getPaths(doc.schema);
-    removeExistingUnique('', uniquePaths, doc, function(err) {
+    removeExistingUnique('', doc.schema._uniqueShard.paths, doc, function(err) {
       if (err) {
         return next(err);
       }
-      saveUnique('', uniquePaths, doc, next);
+      saveUnique('', doc.schema._uniqueShard.paths, doc, next);
     });
   });
   schema.post('save', function() {
     var doc = this;
-    var uniquePaths = getPaths(doc.schema);
-    storeCurrentVals('', uniquePaths, doc, forgetCb);
+    storeCurrentVals('', doc.schema._uniqueShard.paths, doc, forgetCb);
   });
   schema.post('remove', function() {
     var doc = this;
-    var uniquePaths = getPaths(doc.schema);
-    removeExistingUnique('', uniquePaths, doc, forgetCb);
+    removeExistingUnique('', doc.schema._uniqueShard.paths, doc, forgetCb);
   });
 };
 
