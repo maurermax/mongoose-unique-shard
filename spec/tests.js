@@ -68,4 +68,65 @@ describe('mongoose-unique-shard', function() {
       });
     });
   });
+
+  it('in case we remove the original document through mongoose the locking document will also be gone', function(done) {
+    var testModel = new TestModel();
+    testModel.uniqueKey = 'test';
+    testModel.save(function(err) {
+      expect(err).to.not.be.ok;
+      testModel.remove(function(err) {
+        expect(err).to.not.be.ok;
+        uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+          expect(err).to.not.be.ok;
+          expect(doc).to.not.be.ok;
+          done();
+        });
+      });
+    });
+  });
+
+  it('in case we change update the value of a loaded document the unique collection will contain the correct values', function(done) {
+    var testModel = new TestModel();
+    testModel.uniqueKey = 'test';
+    testModel.save(function(err) {
+      expect(err).to.not.be.ok;
+      TestModel.findById(testModel._id, function(err, doc) {
+        expect(err).to.not.be.ok;
+        doc.uniqueKey = 'testChanged';
+        doc.save(function(err) {
+          expect(err).to.not.be.ok;
+          uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+            expect(err).to.not.be.ok;
+            expect(doc).to.not.be.ok;
+            uniqueCollection.findOne({ '_id.vals.uniqueKey': 'testChanged' }, function(err, doc) {
+              expect(err).to.not.be.ok;
+              expect(doc).to.be.ok;
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('in case we change save a document multiple times updating values in between the unique collection will contain the correct values', function(done) {
+    var testModel = new TestModel();
+    testModel.uniqueKey = 'test';
+    testModel.save(function(err) {
+      expect(err).to.not.be.ok;
+      testModel.uniqueKey = 'testChanged';
+      testModel.save(function(err) {
+        expect(err).to.not.be.ok;
+        uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+          expect(err).to.not.be.ok;
+          expect(doc).to.not.be.ok;
+          uniqueCollection.findOne({ '_id.vals.uniqueKey': 'testChanged' }, function(err, doc) {
+            expect(err).to.not.be.ok;
+            expect(doc).to.be.ok;
+            done();
+          });
+        });
+      });
+    });
+  });
 });

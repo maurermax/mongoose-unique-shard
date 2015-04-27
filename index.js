@@ -29,14 +29,18 @@ function performActionForAll(prefix, paths, doc, action, next) {
   }
   // we have a path leaf so let's check if this path is unique
   var val = doc.get(prefix);
-  if (_.isUndefined(val)) {
+  var existingVal;
+  if (doc._uniqueShard && doc._uniqueShard.initVals) {
+    existingVal = doc._uniqueShard.initVals[prefix];
+  }
+  if (_.isUndefined(val) && _.isUndefined(existingVal)) {
     return next();
   }
-  action(prefix, val, next);
+  action(prefix, val, existingVal, next);
 }
 
 function checkUnique(prefix, paths, doc, next) {
-  function performCheckUnique(path, val, cb) {
+  function performCheckUnique(path, val, existingVal, cb) {
     var query = { '_id.collection': doc.constructor.collection.name };
     query['_id.vals.' + path] = val;
     UniqueModel.findOne(query, function(err, uniqueDoc) {
@@ -61,7 +65,7 @@ function checkUnique(prefix, paths, doc, next) {
 }
 
 function saveUnique(prefix, paths, doc, next) {
-  function doSaveUnique(path, val, cb) {
+  function doSaveUnique(path, val, existingVal, cb) {
     var entry = new UniqueModel();
     entry._id = {};
     entry._id.collection = doc.constructor.collection.name;
@@ -72,8 +76,17 @@ function saveUnique(prefix, paths, doc, next) {
   performActionForAll(prefix, paths, doc, doSaveUnique, next);
 }
 
+function removeExistingUnique(prefix, paths, doc, next) {
+  function doRemoveUnique(path, val, existingVal, cb) {
+    var query = { '_id.collection': doc.constructor.collection.name };
+    query['_id.vals.' + path] = existingVal;
+    UniqueModel.remove(query, next);
+  }
+  performActionForAll(prefix, paths, doc, doRemoveUnique, next);
+}
+
 function storeCurrentVals(prefix, paths, doc, next) {
-  function storeValue(path, val, cb) {
+  function storeValue(path, val, existingVal, cb) {
     if (!doc._uniqueShard) {
       Object.defineProperty(doc, '_uniqueShard', { enumerable: false, value: {} });
       doc._uniqueShard.initVals = {};
@@ -85,19 +98,39 @@ function storeCurrentVals(prefix, paths, doc, next) {
 }
 
 module.exports = function(schema) {
-  schema.post('init', function() {
-    var uniquePaths = getPaths(this.schema);
-    storeCurrentVals('', uniquePaths, this, function() {
-      console.log('stored info');
+  var forgetCb = function() {};
+  schema.pre('init', function(next) {
+    var doc = this;
+    doc.on('init', function() {
+      var uniquePaths = getPaths(doc.schema);
+      storeCurrentVals('', uniquePaths, doc, forgetCb);
     });
+    next();
   });
   schema.pre('validate', function(next) {
-    var uniquePaths = getPaths(this.schema);
-    checkUnique('', uniquePaths, this, next);
+    var doc = this;
+    var uniquePaths = getPaths(doc.schema);
+    checkUnique('', uniquePaths, doc, next);
   });
   schema.pre('save', function(next) {
-    var uniquePaths = getPaths(this.schema);
-    saveUnique('', uniquePaths, this, next);
+    var doc = this;
+    var uniquePaths = getPaths(doc.schema);
+    removeExistingUnique('', uniquePaths, doc, function(err) {
+      if (err) {
+        return next(err);
+      }
+      saveUnique('', uniquePaths, doc, next);
+    });
+  });
+  schema.post('save', function() {
+    var doc = this;
+    var uniquePaths = getPaths(doc.schema);
+    storeCurrentVals('', uniquePaths, doc, forgetCb);
+  });
+  schema.post('remove', function() {
+    var doc = this;
+    var uniquePaths = getPaths(doc.schema);
+    removeExistingUnique('', uniquePaths, doc, forgetCb);
   });
 };
 
