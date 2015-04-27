@@ -1,0 +1,33 @@
+{
+  "name": "mongoose-unique-shard",
+  "version": "0.1.0",
+  "description": "When sharding unique indexes are only allowed for keys matching the shard index. This module allows to still define other properties to be unique which will then be modelled using an additional collection to keep track of unique fields.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maurermax/mongoose-unique-shard.git"
+  },
+  "keywords": [
+    "mongoose",
+    "shard-key",
+    "unique"
+  ],
+  "author": "Max Maurer <max.maurer@netlight.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/maurermax/mongoose-unique-shard/issues"
+  },
+  "homepage": "https://github.com/maurermax/mongoose-unique-shard",
+  "dependencies": {
+    "async": "^0.9.0",
+    "lodash": "^3.7.0",
+    "mongoose": "^4.0.2"
+  },
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "mocha": "^2.2.4"
+  }
+}
