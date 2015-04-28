@@ -1,28 +1,11 @@
 'use strict';
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
 var _ = require('lodash');
 var async = require('async');
 var dotty = require("dotty");
 
-var uniqueSchema = new Schema({
-  _id: {
-    type: {
-      _id: false,
-      collection: String,
-      vals: Schema.Types.Mixed
-    }, unique: true
-  },
-  refId: Schema.Types.Mixed
-}, {
-  versionKey: false,
-  autoIndex: false,
-  shardKey: {
-    _id: 'hashed'
-  }
-});
-var UniqueModel = mongoose.model('mongooseUniqueShard', uniqueSchema);
+var uniqueSchema;
+var UniqueModel;
 
 function getValues(doc, paths) {
   var final = [];
@@ -129,7 +112,35 @@ function storeCurrentVals(paths, doc, next) {
   performActionForAll(paths, doc, storeValue, next);
 }
 
-module.exports = function(schema) {
+function init(mongoose) {
+  if (UniqueModel || uniqueSchema) {
+    return;
+  }
+  var Schema = mongoose.Schema;
+  uniqueSchema = new Schema({
+    _id: {
+      type: {
+        _id: false,
+        collection: String,
+        vals: Schema.Types.Mixed
+      }, unique: true
+    },
+    refId: Schema.Types.Mixed
+  }, {
+    versionKey: false,
+    autoIndex: false,
+    shardKey: {
+      _id: 'hashed'
+    }
+  });
+  UniqueModel = mongoose.model('mongooseUniqueShard', uniqueSchema);
+}
+
+module.exports = function(schema, attrs) {
+  if (!attrs.mongoose){
+    throw new Error('please pass in a mongoose object in your attributes hash');
+  }
+  init(attrs.mongoose);
   var forgetCb = function() {
   };
   schema._uniqueShard = {};

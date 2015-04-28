@@ -4,8 +4,10 @@ When sharding unique indexes are only allowed for keys matching the shard index.
 ## How to use?
 
 ````
+    var mongoose = require('mongoose');
+    var Schema = mongoose.Schema;
     var mongooseUniqueShard = require('mongoose-unique-shard');
-    var testSchema = new mongoose.Schema({
+    var testSchema = new Schema({
       uniqueKey: { type: String, uniqueShardIndex: true },
       subdoc: {
         uniqueSubKey: { type: String, uniqueShardIndex: true }
@@ -13,7 +15,7 @@ When sharding unique indexes are only allowed for keys matching the shard index.
       combinedKey1: String,
       combinedKey2: { type: String }
     });
-    testSchema.plugin(mongooseUniqueShard);
+    testSchema.plugin(mongooseUniqueShard, { mongoose: mongoose }); // make sure that you pass your local mongoose to the plugin so that we create our collection in the correct database
     testSchema.addUniqueShardIndex(['combinedKey1', 'combinedKey2']);
     var TestModel = mongoose.model('test', testSchema);
     var tm1 = new TestModel();

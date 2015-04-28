@@ -30,7 +30,7 @@ describe('mongoose-unique-shard', function() {
       combinedKey1: String,
       combinedKey2: { type: String }
     });
-    testSchema.plugin(mongooseUniqueShard);
+    testSchema.plugin(mongooseUniqueShard, { mongoose: mongoose });
     testSchema.addUniqueShardIndex(['combinedKey1', 'combinedKey2']);
     counter++;
     TestModel = mongoose.model('test' + counter, testSchema, 'tests');
