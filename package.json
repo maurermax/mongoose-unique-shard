@@ -23,6 +23,7 @@
   "homepage": "https://github.com/maurermax/mongoose-unique-shard",
   "dependencies": {
     "async": "^0.9.0",
+    "dotty": "0.0.2",
     "lodash": "^3.7.0",
     "mongoose": "^4.0.2"
   },
