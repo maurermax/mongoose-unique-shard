@@ -31,9 +31,10 @@ As unique keys are not allowed in a sharded environment we have to use a separat
  
 When validating an object we check the collection whether it contains an object that would violate the uniqueness of the current object. In case such an object is present validation of the object will fail. Make sure that your objects are validated prior to saving them.
 
-
-
 ### What happens if I delete documents?
+
+If you use the document.delete function we will cleanup old indexes for you. Since it might happen that the original document is deleted by other means we keep a back reference to the _id of the document and its collection with each lock. When a lock for a value pair for a certain document is found, we double check that this document does still exist. In case it has been deleted we will also clean up the lock object. 
+*Beware:* So far we do not double check the values in the reread document. Make sure that you do not modify documents outside of this applications as the lock objects will not be updated.
 
 ## Bummers
 - *Missing transactions could lead to inconsistencies:* Ay you will know Mongo has no transaction support. Inserting the document and inserting the blocker are two separate insertions. It might be that two documents both checked in parallel for the uniqueness object to be present. Both might see that it does not yet exist and then try to write this object. One write will fail as the uniqueness objects themselves have to be unique. 
@@ -43,3 +44,6 @@ Because of the bummers you might want to have a batch job double checking your c
 
 ## I need more info/help. I found a bug.
 Feel free to contact me or add an issue to the issue backlog on github.
+
+## I want testing!
+Run `npm test` to run the test suite. But make sure you have a mongo database running at `mongodb://localhost:27017`
