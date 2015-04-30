@@ -113,7 +113,7 @@ function init(mongoose) {
   }
   var Schema = mongoose.Schema;
   uniqueSchema = new Schema({
-    _id: { type: String, unique: true },
+    _id: { type: String, auto: false },
     refId: Schema.Types.Mixed
   }, {
     versionKey: false,

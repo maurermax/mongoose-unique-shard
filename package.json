@@ -1,6 +1,6 @@
 {
   "name": "mongoose-unique-shard",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "When sharding unique indexes are only allowed for keys matching the shard index. This module allows to still define other properties to be unique which will then be modelled using an additional collection to keep track of unique fields.",
   "main": "index.js",
   "scripts": {
