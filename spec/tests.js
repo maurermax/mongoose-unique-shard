@@ -99,6 +99,18 @@ describe('mongoose-unique-shard', function() {
     });
   });
 
+  it('saving the same document twice will not trigger and error', function(done) {
+    var testModel = new TestModel();
+    testModel.uniqueKey = 'test';
+    testModel.save(function(err) {
+      expect(err).to.not.be.ok;
+      testModel.save(function(err) {
+        expect(err).to.not.be.ok;
+        done();
+      });
+    });
+  });
+
   it('in case the original document is gone and an old anti-duplication entry still exists it is still possible to add a new entry', function(done) {
     var testModel = new TestModel();
     testModel.uniqueKey = 'test';

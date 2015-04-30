@@ -57,7 +57,10 @@ function checkUnique(paths, doc, next) {
         return cb(err);
       }
       if (!uniqueDoc) {
-        return cb();
+        return cb(); // we have no lock so everything is fine
+      }
+      if (_.isEqual(uniqueDoc.refId, doc._id)) {
+        return cb(); // we check the lock so this document will always be allowed to resave its own values
       }
       doc.constructor.collection.findOne({ _id: uniqueDoc.refId }, function(err, originalDoc) {
         if (err) {
