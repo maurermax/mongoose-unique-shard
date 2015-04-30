@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var async = require('async');
-var dotty = require("dotty");
+var hash = require('object-hash');
 
 var uniqueSchema;
 var UniqueModel;
@@ -42,13 +42,17 @@ function performActionForAll(indexes, doc, action, next) {
   }, next);
 }
 
+function getHash(collectionName, paths, vals) {
+  var queryObject = { collection: collectionName };
+  _.times(paths.length, function(i) {
+    queryObject['vals.' + paths[i]] = vals[i];
+  });
+  return hash(queryObject);
+}
+
 function checkUnique(paths, doc, next) {
   function performCheckUnique(paths, vals, existingVals, cb) {
-    var query = { '_id.collection': doc.constructor.collection.name };
-    _.times(paths.length, function(i) {
-      query['_id.vals.' + paths[i]] = vals[i];
-    });
-    UniqueModel.findOne(query, function(err, uniqueDoc) {
+    UniqueModel.findOne({ _id: getHash(doc.constructor.collection.name, paths, vals) }, function(err, uniqueDoc) {
       if (err) {
         return cb(err);
       }
@@ -73,12 +77,7 @@ function checkUnique(paths, doc, next) {
 function saveUnique(paths, doc, next) {
   function doSaveUnique(paths, vals, existingVals, cb) {
     var entry = new UniqueModel();
-    entry._id = {};
-    entry._id.collection = doc.constructor.collection.name;
-    entry._id.vals = {};
-    _.times(paths.length, function(i) {
-      dotty.put(entry._id.vals, paths[i], vals[i]);
-    });
+    entry._id = getHash(doc.constructor.collection.name, paths, vals);
     entry.refId = doc._id;
     entry.save(cb);
   }
@@ -87,11 +86,7 @@ function saveUnique(paths, doc, next) {
 
 function removeExistingUnique(paths, doc, next) {
   function doRemoveUnique(paths, vals, existingVals, cb) {
-    var query = { '_id.collection': doc.constructor.collection.name };
-    _.times(paths.length, function(i) {
-      query['_id.vals.' + paths[i]] = existingVals[i];
-    });
-    UniqueModel.remove(query, next);
+    UniqueModel.remove({ _id: getHash(doc.constructor.collection.name, paths, existingVals)}, cb);
   }
 
   performActionForAll(paths, doc, doRemoveUnique, next);
@@ -118,13 +113,7 @@ function init(mongoose) {
   }
   var Schema = mongoose.Schema;
   uniqueSchema = new Schema({
-    _id: {
-      type: {
-        _id: false,
-        collection: String,
-        vals: Schema.Types.Mixed
-      }, unique: true
-    },
+    _id: { type: String, unique: true },
     refId: Schema.Types.Mixed
   }, {
     versionKey: false,
@@ -172,12 +161,14 @@ module.exports = function(schema, attrs) {
   });
   schema.pre('save', function(next) {
     var doc = this;
-    removeExistingUnique(doc.schema._uniqueShard.paths, doc, function(err) {
-      if (err) {
-        return next(err);
+    async.waterfall([function(cb) {
+      if (doc.isNew) {
+        return cb();
       }
-      saveUnique(doc.schema._uniqueShard.paths, doc, next);
-    });
+      removeExistingUnique(doc.schema._uniqueShard.paths, doc, cb);
+    }, function(cb) {
+      saveUnique(doc.schema._uniqueShard.paths, doc, cb);
+    }], next);
   });
   schema.post('save', function() {
     var doc = this;

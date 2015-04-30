@@ -123,7 +123,7 @@ describe('mongoose-unique-shard', function() {
       expect(err).to.not.be.ok;
       testModel.remove(function(err) {
         expect(err).to.not.be.ok;
-        uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+        uniqueCollection.findOne({ _id: 'c78385aa13158b48a068eccfeb3f27afbd46b45e' }, function(err, doc) {
           expect(err).to.not.be.ok;
           expect(doc).to.not.be.ok;
           done();
@@ -142,10 +142,10 @@ describe('mongoose-unique-shard', function() {
         doc.uniqueKey = 'testChanged';
         doc.save(function(err) {
           expect(err).to.not.be.ok;
-          uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+          uniqueCollection.findOne({ _id: 'c78385aa13158b48a068eccfeb3f27afbd46b45e' }, function(err, doc) {
             expect(err).to.not.be.ok;
             expect(doc).to.not.be.ok;
-            uniqueCollection.findOne({ '_id.vals.uniqueKey': 'testChanged' }, function(err, doc) {
+            uniqueCollection.findOne({ _id: 'e960194e5e9ee731f8b8fab4ae7dce5e8c63333c' }, function(err, doc) {
               expect(err).to.not.be.ok;
               expect(doc).to.be.ok;
               done();
@@ -164,10 +164,10 @@ describe('mongoose-unique-shard', function() {
       testModel.uniqueKey = 'testChanged';
       testModel.save(function(err) {
         expect(err).to.not.be.ok;
-        uniqueCollection.findOne({ '_id.vals.uniqueKey': 'test' }, function(err, doc) {
+        uniqueCollection.findOne({ _id: 'c78385aa13158b48a068eccfeb3f27afbd46b45e' }, function(err, doc) {
           expect(err).to.not.be.ok;
           expect(doc).to.not.be.ok;
-          uniqueCollection.findOne({ '_id.vals.uniqueKey': 'testChanged' }, function(err, doc) {
+          uniqueCollection.findOne({ _id: 'e960194e5e9ee731f8b8fab4ae7dce5e8c63333c' }, function(err, doc) {
             expect(err).to.not.be.ok;
             expect(doc).to.be.ok;
             done();
