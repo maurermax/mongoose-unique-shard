@@ -60,6 +60,7 @@ describe('mongoose-unique-shard', function() {
         expect(err).to.not.be.ok;
         testModelConflicting.save(function(err) {
           expect(err).to.be.ok;
+          expect(err).to.be.an.instanceof(mongooseUniqueShard.DocumentNotUniqueError);
           expect(err.message).to.equal('values ["test"] for paths ["uniqueKey"] are not unique');
           done();
         });
@@ -75,6 +76,7 @@ describe('mongoose-unique-shard', function() {
         expect(err).to.not.be.ok;
         testModelConflicting.save(function(err) {
           expect(err).to.be.ok;
+          expect(err).to.be.an.instanceof(mongooseUniqueShard.DocumentNotUniqueError);
           expect(err.message).to.equal('values ["test"] for paths ["subdoc.uniqueSubKey"] are not unique');
           done();
         });
@@ -92,6 +94,7 @@ describe('mongoose-unique-shard', function() {
         expect(err).to.not.be.ok;
         testModelConflicting.save(function(err) {
           expect(err).to.be.ok;
+          expect(err).to.be.an.instanceof(mongooseUniqueShard.DocumentNotUniqueError);
           expect(err.message).to.equal('values ["val1","val2"] for paths ["combinedKey1","combinedKey2"] are not unique');
           done();
         });
