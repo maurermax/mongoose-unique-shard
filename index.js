@@ -3,9 +3,18 @@
 var _ = require('lodash');
 var async = require('async');
 var hash = require('object-hash');
+var util = require('util');
 
 var uniqueSchema;
 var UniqueModel;
+
+function DocumentNotUniqueError(message) {
+  Error.captureStackTrace(this, this.constructor);
+  this.name = this.constructor.name;
+  this.message = message;
+};
+
+util.inherits(DocumentNotUniqueError, Error);
 
 function getValues(doc, paths) {
   var final = [];
@@ -69,7 +78,7 @@ function checkUnique(paths, doc, next) {
         if (!originalDoc) {
           return uniqueDoc.remove(cb);
         }
-        return cb(new Error('values ' + JSON.stringify(vals) + ' for paths ' + JSON.stringify(paths) + ' are not unique'));
+        return cb(new DocumentNotUniqueError('values ' + JSON.stringify(vals) + ' for paths ' + JSON.stringify(paths) + ' are not unique'));
       });
     });
   }
@@ -182,6 +191,8 @@ module.exports = function(schema, attrs) {
     removeExistingUnique(doc.schema._uniqueShard.paths, doc, forgetCb);
   });
 };
+
+module.exports.DocumentNotUniqueError = DocumentNotUniqueError;
 
 function getPaths(parentPath, schema) {
   return _.reduce(schema.tree, function(memo, node, path) {
